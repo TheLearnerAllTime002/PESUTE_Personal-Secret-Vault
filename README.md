@@ -78,7 +78,7 @@ Follow these steps to get your PESUTE Personal Secret Vault up and running.
     ```
     Upon the first run, the application will guide you through setting up your master password and initializing your secret vault files.
 
-## 📖 Usage
+## Usage
 
 After launching the application with `python main.py`, you will be presented with an interactive menu.
 

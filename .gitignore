@@ -1,0 +1,25 @@
+# Python environment
+venv/
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Logs
+*.log
+
+# Secret data files
+/data/
+/data/*
+!/data/.gitignore
+
+# OS files
+.DS_Store
+Thumbs.db

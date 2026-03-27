@@ -121,21 +121,24 @@ PESUTE_Personal-Secret-Vault/
 
 ## Configuration
 
-The `config.py` file holds important configurable paths for your vault's data. You can modify these paths if you wish to store your secrets, key, or master password hash in different locations.
+The `config.py` file defines important configurable paths used by the vault to store sensitive data. You can modify these paths if you want to change where secrets, encryption keys, or the master password hash are stored.
 
 ### Configuration File: `config.py`
 
-| Variable                      | Description                                                  | Default Value (Example) |
+| Variable                     | Description                                                | Default Value          |
+|-----------------------------|------------------------------------------------------------|------------------------|
+| `SECRET_FILE`               | Path to the file where encrypted secrets are stored        | `secrets.enc`          |
+| `KEY_FILE`                  | Path to the file that stores the encryption key            | `key.key`              |
+| `MASTER_PASSWORD_HASH_FILE` | Path to the file storing the master password hash          | `master_password.hash` |
 
-| :---------------------------- | :----------------------------------------------------------- | :---------------------- |
+### Notes
 
-| `SECRET_FILE`                 | Path to the file where encrypted secrets are stored.         | `secrets.enc`           |
-
-| `KEY_FILE`                    | Path to the file storing the encryption key.                 | `key.key`               |
-
-| `MASTER_PASSWORD_HASH_FILE`   | Path to the file storing the hash of your master password.   | `master_password.hash`  |
-
-**Note**: It is generally recommended to keep these default files within the project directory for simplicity, especially for personal use. However, you have the flexibility to change them.
+- By default, all files are stored within the project directory for simplicity and ease of setup.
+- For personal use, keeping the default configuration is recommended.
+- If you modify these paths:
+  - Ensure the directories exist before runtime
+  - Set appropriate file permissions to protect sensitive data
+  - Avoid committing sensitive files to version control (use `.gitignore`)
 
 ## Contributing
 

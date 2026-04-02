@@ -2,10 +2,9 @@ from core import storage
 import ui.prompts as prompts
 import ui.tui as tui
 
-
-def list_categories(cipher, fake: bool = False):
+def list_categories(username: str, cipher, fake: bool = False):
     tui.section("Categories")
-    entries = storage.load(cipher, fake)
+    entries = storage.load(username, cipher, fake)
     cats    = sorted({e.get("category", "none") for e in entries})
 
     if not cats:

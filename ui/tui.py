@@ -1,4 +1,6 @@
 import time
+from typing import Optional
+
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
@@ -137,7 +139,9 @@ def menu(time_left: float = None):
         ("10", "Import",              "yellow"),
         ("11", "Change Password",     "magenta"),
         ("12", "Remove Password",     "magenta"),
-        ("13", "Exit",                "bright_red"),
+        ("13", "Password Generator",  "bright_blue"),
+        ("14", "Export/Import CSV",   "bright_blue"),
+        ("15", "Exit",                "bright_red"),
     ]
 
     def _table(rows, title_color="cyan"):
@@ -354,8 +358,11 @@ def rule(title: str = ""):
 
 # ── prompts ───────────────────────────────────────────────────────────────────
 
-def prompt(text: str) -> str:
-    return Prompt.ask(f"\n  [bold cyan]›[/] [cyan]{text}[/]")
+def prompt(text: str, default: Optional[str] = None) -> str:
+    prompt_text = f"\n  [bold cyan]›[/] [cyan]{text}[/]"
+    if default is not None:
+        return Prompt.ask(prompt_text, default=default)
+    return Prompt.ask(prompt_text)
 
 
 def confirm(text: str) -> bool:

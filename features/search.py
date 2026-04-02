@@ -7,14 +7,13 @@ import ui.prompts as prompts
 import ui.display as display
 import ui.menus as menus
 
-
-def search(cipher, fake: bool = False):
+def search(username: str, cipher, fake: bool = False):
     tui.section("Search")
     menus.search_menu()
     mode  = prompts.prompt("Search mode: ").strip()
     query = prompts.prompt("Query: ").strip()
 
-    entries = storage.load(cipher, fake)
+    entries = storage.load(username, cipher, fake)
     results = []
 
     for i, e in enumerate(entries):
@@ -43,9 +42,9 @@ def search(cipher, fake: bool = False):
 
     if not results:
         prompts.info("No matches found.")
-        log(f"SEARCH: '{query}' - no results")
+        log(f"SEARCH: {username} - '{query}' - no results")
         return
 
-    log(f"SEARCH: '{query}' - {len(results)} result(s)")
+    log(f"SEARCH: {username} - '{query}' - {len(results)} result(s)")
     for num, e in results:
         display.entry_card(num, e, locked=bool(e.get("pin_hash")))

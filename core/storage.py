@@ -1,16 +1,15 @@
 import json
 import os
 from cryptography.fernet import Fernet
-from config import REAL_VAULT_FILE, FAKE_VAULT_FILE
+from config import get_user_paths
 from core.crypto import encrypt, decrypt
 
+def _path(username: str, fake: bool) -> str:
+    paths = get_user_paths(username)
+    return paths["fake_vault"] if fake else paths["real_vault"]
 
-def _path(fake: bool) -> str:
-    return FAKE_VAULT_FILE if fake else REAL_VAULT_FILE
-
-
-def load(cipher: Fernet, fake: bool = False) -> list[dict]:
-    path = _path(fake)
+def load(username: str, cipher: Fernet, fake: bool = False) -> list[dict]:
+    path = _path(username, fake)
     if not os.path.exists(path):
         return []
     entries = []
@@ -25,9 +24,8 @@ def load(cipher: Fernet, fake: bool = False) -> list[dict]:
                 continue
     return entries
 
-
-def save(entries: list[dict], cipher: Fernet, fake: bool = False):
-    path = _path(fake)
+def save(username: str, entries: list[dict], cipher: Fernet, fake: bool = False):
+    path = _path(username, fake)
     with open(path, "w") as f:
         for entry in entries:
             f.write(encrypt(json.dumps(entry), cipher) + "\n")

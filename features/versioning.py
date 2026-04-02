@@ -8,13 +8,11 @@ from features.entries import unlock_entry
 import ui.tui as tui
 import ui.prompts as prompts
 
-
 def _now() -> str:
     return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-
-def edit(cipher, fake: bool = False):
-    all_entries = storage.load(cipher, fake)
+def edit(username: str, cipher, fake: bool = False):
+    all_entries = storage.load(username, cipher, fake)
     if not all_entries:
         prompts.info("No entries found.")
         return
@@ -70,15 +68,14 @@ def edit(cipher, fake: bool = False):
 
     if changed:
         entry["last_modified"] = _now()
-        storage.save(all_entries, cipher, fake)
+        storage.save(username, all_entries, cipher, fake)
         prompts.success("Entry updated.")
-        log(f"EDIT: '{entry['title']}'")
+        log(f"EDIT: {username} - '{entry['title']}'")
     else:
         prompts.info("No changes made.")
 
-
-def view_history(cipher, fake: bool = False):
-    all_entries = storage.load(cipher, fake)
+def view_history(username: str, cipher, fake: bool = False):
+    all_entries = storage.load(username, cipher, fake)
     if not all_entries:
         prompts.info("No entries found.")
         return
@@ -107,16 +104,15 @@ def view_history(cipher, fake: bool = False):
         return
 
     tui.history_table(entry["history"])
-    log(f"VIEW_HISTORY: '{entry['title']}'")
+    log(f"VIEW_HISTORY: {username} - '{entry['title']}'")
 
-
-def versioning_menu(cipher, fake: bool = False):
+def versioning_menu(username: str, cipher, fake: bool = False):
     tui.section("Edit / Version History")
     tui.console.print("  [yellow]1.[/]  Edit entry")
     tui.console.print("  [yellow]2.[/]  View secret history")
     tui.console.print()
     choice = prompts.prompt("Choose").strip()
 
-    if   choice == "1": edit(cipher, fake)
-    elif choice == "2": view_history(cipher, fake)
+    if   choice == "1": edit(username, cipher, fake)
+    elif choice == "2": view_history(username, cipher, fake)
     else: prompts.error("Invalid option.")

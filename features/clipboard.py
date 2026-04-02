@@ -8,15 +8,14 @@ from features.entries import view, unlock_entry
 import ui.prompts as prompts
 import ui.tui as tui
 
-
-def copy_secret(cipher, fake: bool = False):
-    entries = storage.load(cipher, fake)
+def copy_secret(username: str, cipher, fake: bool = False):
+    entries = storage.load(username, cipher, fake)
     if not entries:
         prompts.info("No entries found.")
         return
 
     tui.section("Copy Secret to Clipboard")
-    view(cipher, fake)
+    view(username, cipher, fake)
 
     try:
         index = int(prompts.prompt("Entry number to copy")) - 1
@@ -30,18 +29,17 @@ def copy_secret(cipher, fake: bool = False):
 
     entry = entries[index]
     if not unlock_entry(entry):
-        log(f"COPY: Failed PIN for '{entry['title']}'")
+        log(f"COPY: {username} - Failed PIN for '{entry['title']}'")
         return
 
-    _copy_and_schedule_clear(entry["secret"], entry["title"])
+    _copy_and_schedule_clear(username, entry["secret"], entry["title"])
 
-
-def _copy_and_schedule_clear(text: str, title: str = ""):
+def _copy_and_schedule_clear(username: str, text: str, title: str = ""):
     try:
         import pyperclip
         pyperclip.copy(text)
         prompts.success(f"'{title}' secret copied. Auto-clearing in {CLIPBOARD_CLEAR}s.")
-        log("CLIPBOARD: Secret copied, auto-clear scheduled")
+        log(f"CLIPBOARD: {username} - Secret copied, auto-clear scheduled")
 
         def clear():
             time.sleep(CLIPBOARD_CLEAR)
@@ -49,7 +47,7 @@ def _copy_and_schedule_clear(text: str, title: str = ""):
                 if pyperclip.paste() == text:
                     pyperclip.copy("")
                     tui.console.print(f"\n  [dim cyan]›[/] [dim]Clipboard cleared.[/]\n")
-                    log("CLIPBOARD: Cleared")
+                    log(f"CLIPBOARD: {username} - Cleared")
             except Exception:
                 pass
 

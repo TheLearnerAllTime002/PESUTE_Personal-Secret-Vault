@@ -3,22 +3,15 @@ import os
 import time
 from getpass import getpass
 
-from config import (
-    PASSWORD_FILE, SALT_FILE,
-    DECOY_PASSWORD_FILE, DECOY_SALT_FILE,
-    MAX_ATTEMPTS, LOCKOUT_DELAY, SELF_DESTRUCT_ATTEMPTS,
-)
+from config import get_user_paths, MAX_ATTEMPTS, LOCKOUT_DELAY, SELF_DESTRUCT_ATTEMPTS
 from core.logger import log
 import ui.prompts as prompts
-
 
 def _generate_salt() -> bytes:
     return os.urandom(16)
 
-
 def _hash(password: str, salt: bytes) -> str:
     return hashlib.pbkdf2_hmac("sha256", password.encode(), salt, 100000).hex()
-
 
 def _write_credentials(password: str, password_file: str, salt_file: str) -> str:
     salt = _generate_salt()
@@ -28,11 +21,9 @@ def _write_credentials(password: str, password_file: str, salt_file: str) -> str
         f.write(_hash(password, salt))
     return password
 
-
 def _prompt_and_write(prompt_text: str, password_file: str, salt_file: str) -> str:
     password = getpass(f"  {prompt_text}")
     return _write_credentials(password, password_file, salt_file)
-
 
 def _check(password: str, password_file: str, salt_file: str) -> bool:
     if not os.path.exists(password_file) or not os.path.exists(salt_file):
@@ -43,41 +34,45 @@ def _check(password: str, password_file: str, salt_file: str) -> bool:
         stored = f.read()
     return _hash(password, salt) == stored
 
-
-def setup() -> str:
-    password = _prompt_and_write("Set a master password: ", PASSWORD_FILE, SALT_FILE)
-    if prompts.confirm("Set up a decoy vault password"):
-        _prompt_and_write("Set decoy vault password: ", DECOY_PASSWORD_FILE, DECOY_SALT_FILE)
+def register_user(username: str):
+    paths = get_user_paths(username)
+    if os.path.exists(paths["password_file"]):
+        prompts.error("User already exists!")
+        return
+        
+    _prompt_and_write(f"Set master password for '{username}': ", paths["password_file"], paths["salt_file"])
+    if prompts.confirm("Set up a decoy vault password?"):
+        _prompt_and_write("Set decoy vault password: ", paths["decoy_password_file"], paths["decoy_salt_file"])
         prompts.success("Decoy vault configured.")
-        log("SETUP: Decoy vault configured")
-    log("SETUP: Master password configured")
-    return password
+    prompts.success(f"User '{username}' registered successfully. You can now login.")
+    log(f"SETUP: User {username} registered")
 
-
-def verify() -> tuple[str | None, bool]:
-    if not os.path.exists(PASSWORD_FILE):
-        return setup(), False
+def verify(username: str) -> tuple[str | None, bool]:
+    paths = get_user_paths(username)
+    if not os.path.exists(paths["password_file"]):
+        prompts.error("User not found. Please register first.")
+        time.sleep(1)
+        return None, False
 
     total_failures = 0
-
     for attempt in range(1, MAX_ATTEMPTS + 1):
         password = getpass("  Enter master password: ")
 
-        if _check(password, PASSWORD_FILE, SALT_FILE):
-            log("LOGIN: Success (real vault)")
+        if _check(password, paths["password_file"], paths["salt_file"]):
+            log(f"LOGIN: {username} success (real vault)")
             return password, False
 
-        if _check(password, DECOY_PASSWORD_FILE, DECOY_SALT_FILE):
-            log("LOGIN: Success (decoy vault)")
+        if _check(password, paths["decoy_password_file"], paths["decoy_salt_file"]):
+            log(f"LOGIN: {username} success (decoy vault)")
             return password, True
 
         total_failures += 1
-        log(f"LOGIN: Failed attempt {attempt}/{MAX_ATTEMPTS}")
+        log(f"LOGIN: {username} failed attempt {attempt}/{MAX_ATTEMPTS}")
         remaining = MAX_ATTEMPTS - attempt
 
         if total_failures >= SELF_DESTRUCT_ATTEMPTS:
             from features.self_destruct import wipe
-            wipe()
+            wipe(username)
             prompts.error("SELF-DESTRUCT: Vault has been wiped.")
             return None, False
 
@@ -86,18 +81,16 @@ def verify() -> tuple[str | None, bool]:
             time.sleep(LOCKOUT_DELAY)
         else:
             prompts.error("Too many failed attempts. Vault locked.")
-            log("LOGIN: Vault locked after max failed attempts")
 
     return None, False
 
-
-def change(current_password: str, cipher) -> str | None:
+def change(username: str, current_password: str, cipher) -> str | None:
     from core import storage
     from core.crypto import get_cipher
+    paths = get_user_paths(username)
 
-    if not _check(current_password, PASSWORD_FILE, SALT_FILE):
+    if not _check(current_password, paths["password_file"], paths["salt_file"]):
         prompts.error("Current password is wrong.")
-        log("CHANGE_PASSWORD: Failed - wrong current password")
         return None
 
     new_password = getpass("  New master password: ")
@@ -105,24 +98,22 @@ def change(current_password: str, cipher) -> str | None:
         prompts.error("Passwords do not match.")
         return None
 
-    entries = storage.load(cipher, fake=False)
-    _write_credentials(new_password, PASSWORD_FILE, SALT_FILE)
-    storage.save(entries, get_cipher(new_password), fake=False)
+    entries = storage.load(username, cipher, fake=False)
+    _write_credentials(new_password, paths["password_file"], paths["salt_file"])
+    storage.save(username, entries, get_cipher(username, new_password), fake=False)
 
     prompts.success("Master password changed and vault re-encrypted.")
-    log("CHANGE_PASSWORD: Success")
     return new_password
 
-
-def remove() -> bool:
-    if not prompts.confirm("Remove master password and reset all auth"):
-        prompts.info("Cancelled.")
+def remove(username: str) -> bool:
+    if not prompts.confirm(f"Delete account and auth for '{username}'?"):
         return False
-
-    for path in [PASSWORD_FILE, SALT_FILE, DECOY_PASSWORD_FILE, DECOY_SALT_FILE]:
+    
+    paths = get_user_paths(username)
+    for key in ["password_file", "salt_file", "decoy_password_file", "decoy_salt_file"]:
+        path = paths[key]
         if os.path.exists(path):
             os.remove(path)
 
-    prompts.success("Master password removed. Set a new one on next launch.")
-    log("REMOVE_PASSWORD: Auth files deleted")
+    prompts.success(f"User '{username}' authentication removed.")
     return True

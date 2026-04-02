@@ -68,9 +68,9 @@ graph TD
     classDef feature fill:#548CA8,stroke:#fff,stroke-width:2px,color:#fff;
     classDef data fill:#EEEEEE,stroke:#334257,stroke-width:2px,color:#000;
 
-    UI["User Interface (ui/)"]:::ui --> Main["Router (main.py)"]:::core
-    Main --> CoreMethods["Core System (core/)"]:::core
-    Main --> Feat["Features (features/)"]:::feature
+    UI["User Interface"]:::ui --> Main["Router"]:::core
+    Main --> CoreMethods["Core System"]:::core
+    Main --> Feat["Features"]:::feature
 
     subgraph Core System
         Auth["auth.py"]:::core
@@ -93,7 +93,7 @@ graph TD
     Feat --> Crypto
     Feat --> Storage
 
-    Storage --> Files[("Encrypted File System (.dat, .bin)")]:::data
+    Storage --> Files[("Encrypted File System")]:::data
 ```
 
 ---
@@ -211,13 +211,19 @@ All records exist within the scoped `data/` directory using dynamic naming conve
 | `data/{username}_vault.dat`               | Line-delimited AES production keys.           | Fernet (AES)     |
 | `data/{username}_decoy_vault.dat`         | Line-delimited AES sterile mock environment.  | Fernet (AES)     |
 
-## 🚀 Quick Setup & Run
-```bash
-# 1. Install Dependencies
-pip install -r requirements.txt
+## 🚀 Quick Setup & Installation
 
-# 2. Boot the Vault System
-python main.py
+You can now easily install PESUTE as a global CLI tool using Python's package manager.
+
+```bash
+# 1. Clone the repository and CD into it
+cd PESUTE_Personal-Secret-Vault
+
+# 2. Install the package
+pip install .
+
+# 3. Boot the Vault System from anywhere!
+pesute
 ```
 
 > **[CAUTION] Data Sovereignty Warning:** Utilizing the self-destruct component wipes irreversible local keys instantly. Operate under zero-trust assumptions. Ensure you regularly employ `Transfer/Backup` to output encrypted, standalone vaults to an offline cold storage medium.

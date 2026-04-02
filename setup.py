@@ -6,6 +6,7 @@ setup(
     description="Personal Secret Vault System (PESUTE)",
     author="Arjun Mitra",
     packages=find_packages(),
+    py_modules=["main", "config"],
     include_package_data=True,
     install_requires=[
         # List dependencies from requirements.txt here manually or dynamically, e.g.:
